@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Boya Meteorológica</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header>
+    <h1>📡 Datos en Tiempo Real - Boya Meteorológica</h1>
+  </header>
+
+  <section>
+    <h2>📈 Aceleración (m/s²)</h2>
+    <canvas id="accelerationChart" width="800" height="300"></canvas>
+  </section>
+
+  <section>
+    <h2>🌀 Giroscopio (°/s)</h2>
+    <canvas id="gyroChart" width="800" height="300"></canvas>
+  </section>
+
+  <section>
+    <h2>🌡️ Temperaturas (°C)</h2>
+    <canvas id="tempChart" width="800" height="300"></canvas>
+  </section>
+
+  <section>
+    <h2>🧭 Gravedad Resultante (m/s²)</h2>
+    <canvas id="gravityChart" width="800" height="300"></canvas>
+  </section>
+
+  <section>
+    <h2>📦 Presión Atmosférica (Pa)</h2>
+    <canvas id="pressureChart" width="800" height="300"></canvas>
+  </section>
+
+  <section>
+    <h2>🔋 Batería (V)</h2>
+    <canvas id="batteryChart" width="800" height="300"></canvas>
+  </section>
+
+  <script>
+    let charts = {};
+
+    function fetchData() {
+      fetch('https://script.google.com/macros/s/AKfycbxbaJA-M5cg4b0fvXymkTI-o5FfcWCZ_sXKnZh66-jDhZ9aMVvrlpp9yspyy-HaShjUww/exec')
+        .then(res => res.json())
+        .then(data => {
+          const labels = data.map(d => d.timestamp);
+          const accX = data.map(d => d.accX);
+          const accY = data.map(d => d.accY);
+          const accZ = data.map(d => d.accZ);
+          const gyroX = data.map(d => d.gyroX);
+          const gyroY = data.map(d => d.gyroY);
+          const gyroZ = data.map(d => d.gyroZ);
+          const tempMCU = data.map(d => d.tempMCU);
+          const tempWater = data.map(d => d.tempWater);
+          const tempBMP = data.map(d => d.tempBMP);
+          const gravity = data.map(d => d.gravity);
+          const pressure = data.map(d => d.pressure);
+          const battery = data.map(d => d.battery);
+
+          // Inicializar gráficos si no existen
+          if (!charts.acceleration) {
+            charts.acceleration = new Chart(document.getElementById('accelerationChart'), {
+              type: 'line',
+               {
+                labels: labels,
+                datasets: [
+                  { label: 'Aceleración X', data: accX, borderColor: 'red', fill: false },
+                  { label: 'Aceleración Y', data: accY, borderColor: 'green', fill: false },
+                  { label: 'Aceleración Z', data: accZ, borderColor: 'blue', fill: false }
+                ]
+              },
+              options: { responsive: true, animation: false }
+            });
+
+            charts.gyro = new Chart(document.getElementById('gyroChart'), {
+              type: 'line',
+               {
+                labels: labels,
+                datasets: [
+                  { label: 'Giro X', data: gyroX, borderColor: 'red', fill: false },
+                  { label: 'Giro Y', data: gyroY, borderColor: 'green', fill: false },
+                  { label: 'Giro Z', data: gyroZ, borderColor: 'blue', fill: false }
+                ]
+              },
+              options: { responsive: true, animation: false }
+            });
+
+            charts.temp = new Chart(document.getElementById('tempChart'), {
+              type: 'line',
+               {
+                labels: labels,
+                datasets: [
+                  { label: 'MCU', data: tempMCU, borderColor: 'orange', fill: false },
+                  { label: 'Agua', data: tempWater, borderColor: 'blue', fill: false },
+                  { label: 'BMP', data: tempBMP, borderColor: 'purple', fill: false }
+                ]
+              },
+              options: { responsive: true, animation: false }
+            });
+
+            charts.gravity = new Chart(document.getElementById('gravityChart'), {
+              type: 'line',
+               {
+                labels: labels,
+                datasets: [
+                  { label: 'Gravedad', data: gravity, borderColor: 'brown', fill: false }
+                ]
+              },
+              options: { responsive: true, animation: false }
+            });
+
+            charts.pressure = new Chart(document.getElementById('pressureChart'), {
+              type: 'line',
+               {
+                labels: labels,
+                datasets: [
+                  { label: 'Presión', data: pressure, borderColor: 'teal', fill: false }
+                ]
+              },
+              options: { responsive: true, animation: false }
+            });
+
+            charts.battery = new Chart(document.getElementById('batteryChart'), {
+              type: 'line',
+               {
+                labels: labels,
+                datasets: [
+                  { label: 'Batería', data: battery, borderColor: 'olive', fill: false }
+                ]
+              },
+              options: { responsive: true, animation: false }
+            });
+
+          } else {
+            // Actualizar datos
+            Object.values(charts).forEach(chart => {
+              chart.data.labels = labels;
+              chart.update();
+            });
+
+            charts.acceleration.data.datasets[0].data = accX;
+            charts.acceleration.data.datasets[1].data = accY;
+            charts.acceleration.data.datasets[2].data = accZ;
+
+            charts.gyro.data.datasets[0].data = gyroX;
+            charts.gyro.data.datasets[1].data = gyroY;
+            charts.gyro.data.datasets[2].data = gyroZ;
+
+            charts.temp.data.datasets[0].data = tempMCU;
+            charts.temp.data.datasets[1].data = tempWater;
+            charts.temp.data.datasets[2].data = tempBMP;
+
+            charts.gravity.data.datasets[0].data = gravity;
+            charts.pressure.data.datasets[0].data = pressure;
+            charts.battery.data.datasets[0].data = battery;
+          }
+        });
+    }
+
+    // Cargar datos al inicio y actualizar cada 5 minutos
+    fetchData();
+    setInterval(fetchData, 300000); // 5 minutos
+  </script>
+</body>
+</html>
